@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 def fitness_function(n, dist, flows, sol):
     ans = 0
@@ -9,30 +10,47 @@ def fitness_function(n, dist, flows, sol):
 
 
 def get_start_solution(n, dist, flows):
-    sol = [i for i in range(n)]
-    random.shuffle(sol)
-    return sol
+    return list(np.random.permutation(n))
 
+
+def recalc_fitness_function(n, dist, flows, sol, i, j, ff):
+    for k in range(n):
+        ff -= dist[i][k] * flows[sol[i]][sol[k]]
+        ff -= dist[j][k] * flows[sol[j]][sol[k]]
+    sol[i], sol[j] = sol[j], sol[i]
+    for k in range(n):
+        ff += dist[i][k] * flows[sol[i]][sol[k]]
+        ff += dist[j][k] * flows[sol[j]][sol[k]]
+    return sol, ff
 
 def local_search(n, dist, flows, sol):
     dlb = [0 for i in range(n)]
-    current_sol = fitness_function(n, dist, flows, sol)
-    for i in range(n-1):
+    current_value = fitness_function(n, dist, flows, sol)
+    best_sol = []
+    best_value = 9999999
+    i = 0
+    while i < n - 1:
+        flag = True
+        if dlb[i] == 1:
+            i += 1
+            continue
         for j in range(i+1, n):
             if dlb[j] == 1:
-                break
-            flag = True
-            sol[i], sol[j] = sol[j], sol[i]
-            temp_sol = fitness_function(n, dist, flows, sol)
-            if temp_sol >= current_sol:
-                sol[i], sol[j] = sol[j], sol[i]
-            else:
-                current_sol = temp_sol
+                continue
+            #sol[i], sol[j] = sol[j], sol[i]
+            sol, temp_value = recalc_fitness_function(n, dist, flows, sol, i, j, current_value)
+            if temp_value < current_value:
+                best_sol = sol.copy()
+                best_value = temp_value
                 flag = False
+                i = 0
                 break
+            else:
+                sol[i], sol[j] = sol[j], sol[i]
         if flag:
             dlb[i] = 1
-    return current_sol, sol
+        i += 1
+    return best_value, best_sol
 
 
 def stochastic_2_opt(n, sol):
@@ -48,7 +66,9 @@ def iterated_local_search(n, dist, flows):
     start_sol = get_start_solution(n, dist, flows)
     value, current_sol = local_search(n, dist, flows, start_sol)
     counter = 0
+    #total_counter = 0
     while counter < 50:
+        #total_counter += 1
         counter += 1
         perturbated_sol = stochastic_2_opt(n, current_sol)
         temp_val, temp_sol = local_search(n, dist, flows, perturbated_sol)

@@ -26,13 +26,13 @@ if __name__ == '__main__':
         print(filename)
         results_two_opt = []
         time_executed = 0
-        for i in range(10):
+        for i in range(200):
             start_time = time.time()
             results_two_opt.append(qap.local_search(*data[filename], qap.get_start_solution(*data[filename])))
             time_executed += time.time() - start_time
         print('Local search')
-        print(f'Average time: {time_executed/10}')
-        best_result = sorted(results_two_opt, key=lambda x: x[1])[0]
+        print(f'Average time: {time_executed/200}')
+        best_result = sorted(results_two_opt, key=lambda x: x[0])[0]
         print(f'Best result: {best_result[1]}')
         print(f'Best value: {best_result[0]}')
 
